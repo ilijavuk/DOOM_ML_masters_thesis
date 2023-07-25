@@ -4,6 +4,7 @@ from gym import Env
 from gym.spaces import Discrete, Box
 import cv2
 from vizdoom.vizdoom import GameVariable
+import EnvironmentConfigurations as EnvConfig 
 
 damage_reward_factor = 0.01
 distance_reward = 5e-4
@@ -38,6 +39,7 @@ class VizDoomGym(Env):
 
     self.is_reward_shaping_on = is_reward_shaping_on
     self.action_number = env_config["actionNumber"]
+    self.action_space = Discrete(self.action_number)
     self.actions = np.identity(self.action_number, dtype=np.uint8)
 
     height, width, channels = self.game.get_screen_height(), self.game.get_screen_width(), self.game.get_screen_channels()
@@ -55,10 +57,10 @@ class VizDoomGym(Env):
         GameVariable.POSITION_Y)
 
   def get_weapon_state(self):
-        return [self.game.get_game_variable(WEAPON_VARIABLES[i]) for i in range(len(WEAPON_VARIABLES))]
+    return np.array([self.game.get_game_variable(WEAPON_VARIABLES[i]) for i in range(len(WEAPON_VARIABLES))])
   
   def get_ammo_state(self):
-    return [self.game.get_game_variable(AMMO_VARIABLES[i]) for i in range(len(AMMO_VARIABLES))]
+    return np.array([self.game.get_game_variable(AMMO_VARIABLES[i]) for i in range(len(AMMO_VARIABLES))])
 
   def close(self):
     self.game.close()
@@ -101,11 +103,11 @@ class VizDoomGym(Env):
       self.weapon_state = self.get_weapon_state()
 
       new_ammo_state = self.get_ammo_state()
-      delta_ammo = (new_ammo_state - self.ammo_state) * self.weapon_state
+      delta_ammo = np.sum((new_ammo_state - self.ammo_state) * self.weapon_state)
       self.ammo_state = new_ammo_state
       
-      ammo_reward = ammo_reward_factor * max(0, np.sum(delta_ammo))
-      ammo_penalty = ammo_penalty_factor * min(0, np.sum(delta_ammo))
+      ammo_reward = ammo_reward_factor * max(0, delta_ammo)
+      ammo_penalty = ammo_penalty_factor * min(0, delta_ammo)
       
       reward = ammo_reward - ammo_penalty
       return reward
@@ -155,22 +157,8 @@ class VizDoomGym(Env):
     pass
 
   def process_frame(self, observation):
-    expected_shape = (240, 320, 3)
-
-    
-    if observation.shape != expected_shape:
-        raise ValueError(f"Unexpected observation shape. Expected {expected_shape}, but got {observation.shape}.")
+    if observation.shape != EnvConfig.EXPECTED_IMAGE_SHAPE:
+        raise ValueError(f"Unexpected observation shape. Expected {EnvConfig.EXPECTED_IMAGE_SHAPE}, but got {observation.shape}.")
     
     resized = cv2.resize(observation[40:, 4:-4], None, fx=.5, fy=.5, interpolation=cv2.INTER_AREA)
-    
-    #fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
-    #axs[0].imshow(observation, cmap='gray')
-    #axs[0].set_title('Original Image')
-
-    #axs[1].imshow(resized, cmap='gray')
-    #axs[1].set_title('Resized Image')
-
-    # plt.show()
-
     return resized

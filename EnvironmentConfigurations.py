@@ -4,6 +4,7 @@ TENSORBOARD_LOG_PATH_PREFIX = './logs/logs_for_'
 CURRENT_CONFIGURATION_INDEX = 0
 EVALUATION_FREQUENCY = 25000
 MODEL_SAVING_FREQUENCY = 25000
+EXPECTED_IMAGE_SHAPE = (240, 320, 3)
 
 configurations = [{
                     'name': 'basic',
