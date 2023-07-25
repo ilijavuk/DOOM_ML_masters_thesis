@@ -1,5 +1,3 @@
-import typing as t
-
 from stable_baselines3.common import vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
 from VizdoomGymWrapper import VizDoomGym
