@@ -5,16 +5,7 @@ from gym.spaces import Discrete, Box
 import cv2
 from vizdoom.vizdoom import GameVariable
 import EnvironmentConfigurations as EnvConfig 
-
-damage_reward_factor = 0.01
-distance_reward = 5e-4
-distance_penalty = -2.5e-3
-distance_reward_threshold = 3.0
-ammo_reward_factor = 0.02
-ammo_penalty_factor = -0.01
-health_reward_factor = 0.02
-health_penalty_factor = -0.01
-armor_reward_factor = 0.01
+from RewardShapingFactors import REWARD_SHAPING
 
 AMMO_VARIABLES = [GameVariable.AMMO0, GameVariable.AMMO1,
                   GameVariable.AMMO2, GameVariable.AMMO3,
@@ -96,7 +87,7 @@ class VizDoomGym(Env):
       delta_damage_dealt = damage_dealt - self.damage_dealt
       self.damage_dealt = damage_dealt
       
-      reward = damage_reward_factor * delta_damage_dealt
+      reward = REWARD_SHAPING.DAMAGE_REWARD_FACTOR * delta_damage_dealt
       return reward
   
   def calculate_ammo_reward(self):
@@ -106,8 +97,8 @@ class VizDoomGym(Env):
       delta_ammo = np.sum((new_ammo_state - self.ammo_state) * self.weapon_state)
       self.ammo_state = new_ammo_state
       
-      ammo_reward = ammo_reward_factor * max(0, delta_ammo)
-      ammo_penalty = ammo_penalty_factor * min(0, delta_ammo)
+      ammo_reward = REWARD_SHAPING.AMMO_REWARD_FACTOR * max(0, delta_ammo)
+      ammo_penalty = REWARD_SHAPING.AMMO_PENALTY_FACTOR * min(0, delta_ammo)
       
       reward = ammo_reward - ammo_penalty
       return reward
@@ -117,8 +108,8 @@ class VizDoomGym(Env):
       delta_health = health - self.health
       self.health = health
 
-      health_reward = health_reward_factor * max(0, delta_health)
-      health_penalty = health_penalty_factor * min(0, delta_health)
+      health_reward = REWARD_SHAPING.HEALTH_REWARD_FACTOR * max(0, delta_health)
+      health_penalty = REWARD_SHAPING.HEALTH_PENALTY_FACTOR * min(0, delta_health)
 
       reward = health_reward - health_penalty
       return reward
@@ -128,7 +119,7 @@ class VizDoomGym(Env):
       delta_armor = armor - self.armor
       self.armor = armor
       
-      reward = armor_reward_factor * max(0, delta_armor)
+      reward = REWARD_SHAPING.ARMOR_REWARD_FACTOR * max(0, delta_armor)
       return reward
   
   def calculate_distance_reward(self):
@@ -140,7 +131,7 @@ class VizDoomGym(Env):
       self.x = x
       self.y = y
 
-      reward = distance_reward if distance_moved > distance_reward_threshold else distance_penalty
+      reward = REWARD_SHAPING.DISTANCE_REWARD if distance_moved > REWARD_SHAPING.DISTANCE_REWARD_THRESHOLD else REWARD_SHAPING.DISTANCE_PENALTY
       return reward
 
   def reset(self):
